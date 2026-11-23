@@ -29,7 +29,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardOptions
 import com.syncbeats.app.network.NetworkUtils
 import com.syncbeats.app.service.PartyRole
 import com.syncbeats.app.service.SyncAudioService
@@ -353,7 +356,7 @@ fun ClientScreen(
     onLatencyChange: (Long) -> Unit,
     onBack: () -> Unit
 ) {
-    var manualIp by remember { mutableStateOf("192.168.43.1") }
+    var manualIp by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = {
@@ -383,6 +386,10 @@ fun ClientScreen(
                     value = manualIp,
                     onValueChange = { manualIp = it },
                     label = { Text("Host IP Address") },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Decimal,
+                        imeAction = ImeAction.Done
+                    ),
                     singleLine = true,
                     modifier = Modifier.weight(1f)
                 )

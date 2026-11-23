@@ -414,7 +414,7 @@ class SyncAudioService : Service() {
     fun connectToHost(ip: String, port: Int = NetworkUtils.WS_PORT) {
         _state.update { it.copy(hostIp = ip, wsPort = port) }
         syncClient.connect(ip, port)
-        promoteToForeground("Connected to $ip")
+        promoteToForeground("Connecting to $ip")
     }
 
     fun setManualLatencyOffset(offsetMs: Long) {

@@ -3,6 +3,7 @@ package com.syncbeats.app.network
 import android.os.Build
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.plugins.websocket.webSocket
@@ -30,6 +31,10 @@ class SyncClient(
 
     private val httpClient = HttpClient(CIO) {
         install(WebSockets)
+        install(HttpTimeout) {
+            connectTimeoutMillis = 5_000
+            socketTimeoutMillis = 10_000
+        }
     }
 
     private val _connectionState = MutableStateFlow(ConnectionState.DISCONNECTED)
@@ -44,12 +49,24 @@ class SyncClient(
 
     fun connect(hostIp: String, wsPort: Int = NetworkUtils.WS_PORT) {
         disconnect()
+        val normalizedIp = hostIp.trim()
+        val isValidIpv4 = normalizedIp.split('.').let { octets ->
+            octets.size == 4 && octets.all { octet ->
+                octet.isNotEmpty() && octet.all(Char::isDigit) &&
+                    octet.toIntOrNull()?.let { it in 0..255 } == true
+            }
+        }
+        if (!isValidIpv4) {
+            _errorMessage.value = "Enter a valid host IPv4 address"
+            _connectionState.value = ConnectionState.ERROR
+            return
+        }
         _errorMessage.value = null
         _connectionState.value = ConnectionState.CONNECTING
 
         connectionJob = scope.launch {
             try {
-                httpClient.webSocket(host = hostIp.trim(), port = wsPort, path = "/sync") {
+                httpClient.webSocket(host = normalizedIp, port = wsPort, path = "/sync") {
                     activeSession = this
                     sendMessage(SyncMessage.Hello(clientId = clientId, deviceName = deviceName))
 
