@@ -3,7 +3,7 @@ package com.syncbeats.app.network
 import android.os.SystemClock
 import io.ktor.server.application.install
 import io.ktor.server.cio.CIO
-import io.ktor.server.cio.CIOApplicationEngine
+import io.ktor.server.engine.ApplicationEngine
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.routing.routing
 import io.ktor.server.websocket.DefaultWebSocketServerSession
@@ -30,7 +30,7 @@ class SyncWebSocketServer(
         var info: ConnectedClientInfo
     )
 
-    private var server: CIOApplicationEngine? = null
+    private var server: ApplicationEngine? = null
     private val sessions = ConcurrentHashMap<String, ClientSession>()
 
     private val _clients = MutableStateFlow<List<ConnectedClientInfo>>(emptyList())

@@ -8,7 +8,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
 import io.ktor.server.cio.CIO
-import io.ktor.server.cio.CIOApplicationEngine
+import io.ktor.server.engine.ApplicationEngine
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.response.header
 import io.ktor.server.response.respond
@@ -21,21 +21,21 @@ import kotlinx.coroutines.withContext
 import java.io.FileInputStream
 import java.util.concurrent.atomic.AtomicReference
 
-class AudioHttpServer(private val context: Context) {
+class AudioHttpServer(private val appContext: Context) {
 
-    private var server: CIOApplicationEngine? = null
+    private var server: ApplicationEngine? = null
     private val currentUri = AtomicReference<Uri?>(null)
     private val currentMimeType = AtomicReference("audio/mpeg")
     private val currentFileSize = AtomicReference(0L)
 
     fun setAudioTrack(uri: Uri): Pair<String, Long> {
         currentUri.set(uri)
-        val mime = context.contentResolver.getType(uri) ?: "audio/mpeg"
+        val mime = appContext.contentResolver.getType(uri) ?: "audio/mpeg"
         currentMimeType.set(mime)
 
         var fileName = "Audio Track"
         var fileSize = 0L
-        context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+        appContext.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
             if (cursor.moveToFirst()) {
                 val nameIdx = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
                 val sizeIdx = cursor.getColumnIndex(OpenableColumns.SIZE)
@@ -44,7 +44,7 @@ class AudioHttpServer(private val context: Context) {
             }
         }
         if (fileSize <= 0L) {
-            context.contentResolver.openAssetFileDescriptor(uri, "r")?.use { afd ->
+            appContext.contentResolver.openAssetFileDescriptor(uri, "r")?.use { afd ->
                 if (afd.length > 0) fileSize = afd.length
             }
         }
@@ -99,7 +99,7 @@ class AudioHttpServer(private val context: Context) {
                     val status = if (isPartial) HttpStatusCode.PartialContent else HttpStatusCode.OK
                     call.respondBytesWriter(contentType = contentType, status = status) {
                         withContext(Dispatchers.IO) {
-                            context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
+                            appContext.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
                                 FileInputStream(pfd.fileDescriptor).use { fis ->
                                     if (start > 0) {
                                         fis.channel.position(start)
