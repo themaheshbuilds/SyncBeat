@@ -233,10 +233,13 @@ fun HostScreen(
                 Column(Modifier.padding(16.dp)) {
                     Text("Manual Connect IP (Wi-Fi / Hotspot)", style = MaterialTheme.typography.labelMedium)
                     Text(
-                        text = "${state.hostIp}:${state.wsPort}",
+                        text = state.hostIp.ifBlank { "Connect to Wi-Fi or start a hotspot" },
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold
                     )
+                    if (state.hostIp.isNotBlank()) {
+                        Text("Port ${state.wsPort}", style = MaterialTheme.typography.bodySmall)
+                    }
                 }
             }
 
@@ -394,12 +397,19 @@ fun ClientScreen(
                     modifier = Modifier.weight(1f)
                 )
                 Button(
-                    onClick = { onConnect(manualIp, NetworkUtils.WS_PORT) },
+                    onClick = { onConnect(manualIp.trim(), NetworkUtils.WS_PORT) },
+                    enabled = manualIp.isNotBlank(),
                     modifier = Modifier.height(56.dp)
                 ) {
                     Text("Connect")
                 }
             }
+
+            Text(
+                text = "Both phones must be on the same Wi-Fi or hotspot. Enter only the host IP shown on its screen (no port or http://), or choose a discovered host below.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
 
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(

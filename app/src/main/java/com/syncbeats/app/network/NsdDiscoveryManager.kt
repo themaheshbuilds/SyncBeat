@@ -8,6 +8,7 @@ import android.os.Build
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.net.Inet4Address
 import java.util.concurrent.Executors
 
 class NsdDiscoveryManager(context: Context) {
@@ -96,7 +97,9 @@ class NsdDiscoveryManager(context: Context) {
                     object : NsdManager.ServiceInfoCallback {
                         override fun onServiceInfoCallbackRegistrationFailed(errorCode: Int) {}
                         override fun onServiceUpdated(updated: NsdServiceInfo) {
-                            val ip = updated.hostAddresses.firstOrNull { !it.isLoopbackAddress }?.hostAddress ?: return
+                            val ip = updated.hostAddresses
+                                .firstOrNull { it is Inet4Address && !it.isLoopbackAddress }
+                                ?.hostAddress ?: return
                             addHost(DiscoveredHost(updated.serviceName, ip, updated.port))
                         }
                         override fun onServiceLost() {}
@@ -110,7 +113,8 @@ class NsdDiscoveryManager(context: Context) {
                 nsdManager.resolveService(serviceInfo, object : NsdManager.ResolveListener {
                     override fun onResolveFailed(info: NsdServiceInfo, errorCode: Int) {}
                     override fun onServiceResolved(resolved: NsdServiceInfo) {
-                        val ip = resolved.host?.hostAddress ?: return
+                        val address = resolved.host as? Inet4Address ?: return
+                        val ip = address.hostAddress ?: return
                         addHost(DiscoveredHost(resolved.serviceName, ip, resolved.port))
                     }
                 })

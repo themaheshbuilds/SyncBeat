@@ -102,7 +102,9 @@ class SyncClient(
                     readerJob.join()
                 }
             } catch (e: Exception) {
-                _errorMessage.value = e.message ?: "Connection failed"
+                val reason = e.message?.takeIf { it.isNotBlank() } ?: "connection failed"
+                _errorMessage.value =
+                    "Couldn't connect to $normalizedIp:$wsPort ($reason). Both phones must be on the same Wi-Fi or hotspot, and the host must be open."
                 _connectionState.value = ConnectionState.ERROR
             } finally {
                 activeSession = null

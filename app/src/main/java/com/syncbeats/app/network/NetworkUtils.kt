@@ -18,10 +18,14 @@ object NetworkUtils {
                     name.startsWith("ap") || name.startsWith("swlan") -> 1
                     name.startsWith("wlan") -> 2
                     name.startsWith("eth") -> 3
-                    else -> 4
+                    else -> continue
                 }
                 for (addr in intf.inetAddresses.toList()) {
-                    if (addr is Inet4Address && !addr.isLoopbackAddress) {
+                    if (addr is Inet4Address &&
+                        !addr.isLoopbackAddress &&
+                        !addr.isLinkLocalAddress &&
+                        addr.isSiteLocalAddress
+                    ) {
                         addr.hostAddress?.let { ip ->
                             candidates.add(priority to ip)
                         }
@@ -30,6 +34,6 @@ object NetworkUtils {
             }
         } catch (_: Exception) {
         }
-        return candidates.minByOrNull { it.first }?.second ?: "0.0.0.0"
+        return candidates.minByOrNull { it.first }?.second.orEmpty()
     }
 }
